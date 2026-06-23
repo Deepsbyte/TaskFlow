@@ -34,7 +34,20 @@ urlpatterns = [
 # Static files for the React build and Django assets
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-# React app catch-all must come last so it does not swallow static asset requests
-urlpatterns += [
-    re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
-]
+# Check if frontend build exists, otherwise serve API status at root
+if (FRONTEND_BUILD_DIR / 'index.html').exists():
+    urlpatterns += [
+        re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
+    ]
+else:
+    from django.http import JsonResponse
+    def api_root(request):
+        return JsonResponse({
+            "status": "online",
+            "message": "TaskFlow API is running",
+            "api_root": "/api/v1/"
+        })
+    urlpatterns += [
+        path("", api_root),
+    ]
+
