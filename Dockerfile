@@ -13,7 +13,7 @@ RUN pip install --user --no-cache-dir -r requirements.txt
 # Final stage
 FROM python:3.13-slim
 
-WORKDIR /app
+WORKDIR /app/backend
 
 # Install runtime deps only
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -25,13 +25,14 @@ COPY --from=builder /root/.local /root/.local
 ENV PATH=/root/.local/bin:$PATH
 
 # Copy application code
-COPY backend/ ./backend/
+COPY backend/ .
 
 # Run migrations and collect static files
-RUN python backend/manage.py migrate --noinput
-RUN python backend/manage.py collectstatic --noinput --clear
+RUN python manage.py migrate --noinput
+RUN python manage.py collectstatic --noinput --clear
 
 EXPOSE 8000
 
 # Default command: Gunicorn (can be overridden for worker/beat)
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "backend.wsgi:application"]
+
